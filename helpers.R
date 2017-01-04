@@ -8,10 +8,10 @@ library(e1071)
 csv_data_setup <- function(data_csv, input_cols, output_cols, samplesize_percentage){
   new_list <- list()
   raw_data <- read.csv(data_csv)
-  inputs <- input.data(raw_data, input_cols)
-  outputs <- output.data(raw_data, output_cols)
-  sample_size <- round(nrow(inputs) * samplesize_percentage)
-  test_size <- nrow(raw_data) - sample_size
+  new_list["input"] <- input.data(raw_data, input_cols)
+  new_list["output"] <- output.data(raw_data, output_cols)
+  new_list["sample_size"] <- round(nrow(inputs) * samplesize_percentage)
+  new_list["test_size"] <- nrow(raw_data) - sample_size
 }
 
 data_sampling_row_setup <- function(input, output, sample_size){
