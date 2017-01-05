@@ -10,21 +10,31 @@ KrigOpt <- function(data_csv, test_data, input_cols, output_cols, samplesize_per
 }
 
 optimal_theta_monte_carlo <- function(input, output, sample_size, cross_validate_count, sim_count){
+  best_theta <- NULL
+  best_rmse <- NULL
   for (i in as.range(sim_count)){
     theta_values <- krig_simulation_thetas(input, output, sample_size)
     simulation_table <- krig_monte_carlo_table(input, output, sample_size, cross_validate_count, theta_values)
     rmse <- root_mean_sq(simulation_table)
-    if (i == 1){
-      best_thetas <- theta_values
-      best_rmse <- rmse
-    } else {
-      if (best_rmse > rmse){
-        best_thetas <- theta_values
-        best_rmse <- rmse
-      }
-    }
+    thetas <- theta_comparison(theta_values, rmse, best_theta, best_rmse)
+    best_theta <- thetas$theta
+    best_rmse <- thetas$rmse
   }
   best_thetas
+}
+
+theta_comparison <- function(current_theta, current_rmse, best_theta, best_rmse){
+  new_list <- list()
+  if (best_theta == NULL){
+    new_list["theta"] = data.frame(current_theta)
+    new_list["rmse"] = data.frame(current_rmse)
+  } else {
+    if (best_rmse > current_rmse){
+      new_list["theta"] <- current_theta
+      new_list["rmse"] <- current_rmse
+    }
+  }
+  new_list
 }
 
 krig_simulation_thetas <- function(input, ouputs, sample_size){
@@ -49,7 +59,8 @@ krig_test_data_monte_carlo <- function(test_data, input, output, sample_size, va
   full_table
 }
 
-krig_monte_carlo_table <- function(input, output, sample_size, validation_count, thetas){ <- nrow(input) - sample_size
+krig_monte_carlo_table <- function(input, output, sample_size, validation_count, thetas){
+  test_size <- nrow(input) - sample_size
   full_table <- NULL
   for (i in as.range(validation_count)){
     sub_table <- preallocated_matrix(ncol = 2, nrow )
@@ -58,7 +69,7 @@ krig_monte_carlo_table <- function(input, output, sample_size, validation_count,
     predictions <- krig_predict(simulation_model, data$test_input)
     experimental_v_predicted <- data.frame(data$test_output, predicted)
     #performance critical step with sum_mean!!!!
-    sub_table <- insert_to_preallocated_matrix(sub_table, experimental_v_predicted, i, test_size)
+    sub_table <- insert_to_preallocated_matrix(sub_table, experimental_v_predicted, i, test_size) #probably a really bad idea for speed
     full_table <- rbind(full_table, sub_tables)
     full_table <- sum_mean(full_table, 1)
   }
