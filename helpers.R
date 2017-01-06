@@ -4,14 +4,26 @@ library(hydroGOF)
 library(reshape)
 library(Metrics)
 library(e1071)
+setwd('/home/andrew/Dropbox/R_files/RawData')
 
 csv_data_setup <- function(data_csv, input_cols, output_cols, samplesize_percentage){
   new_list <- list()
   raw_data <- read.csv(data_csv)
-  new_list["input"] <- input.data(raw_data, input_cols)
-  new_list["output"] <- output.data(raw_data, output_cols)
-  new_list["sample_size"] <- round(nrow(inputs) * samplesize_percentage)
+  sample_size <- round(nrow(raw_data) * samplesize_percentage)
+  new_list[["input"]] <- input_data(raw_data, input_cols)
+  new_list[["output"]] <- output_data(raw_data, output_cols)
+  new_list["sample_size"] <- sample_size
   new_list["test_size"] <- nrow(raw_data) - sample_size
+  new_list
+}
+x <- csv_data_setup('Freezing.csv', 2:5, 6, 0.85)
+
+input_data <- function(raw_data, input_cols){
+  data.frame(raw_data[ ,input_cols])
+}
+
+output_data <- function(raw_data, output_cols){
+  data.frame(raw_data[ ,output_cols])
 }
 
 data_sampling_row_setup <- function(input, output, sample_size){
@@ -36,12 +48,12 @@ insert_to_preallocated_matrix <- function(table, data, i, test_size){
   table
 }
 
-sample.rows <- function(rows, sample_size){
-  sample(length(rows), sample_size)
+preallocated_matrix <- function(ncol, nrow){
+  matrix(data = NA, ncol = ncol, nrow)
 }
 
-preallocated_matrix(ncol, nrow){
-  matrix(data = NA, ncol = ncol, nrow)
+sample.rows <- function(rows, sample_size){
+  sample(length(rows), sample_size)
 }
 
 root_mean_sq <- function(data){
@@ -100,23 +112,23 @@ percentCOMP <- function(incriments=.01){
 	}
 	fullgrid
 }
-
-warnings <- function(ignorewarns == FALSE){
-  if (ignorewarns==FALSE){
-    if (is.character(data)==FALSE){
-      print('data file not characters.')
-      stop('data is not as.character', call.=FALSE)
-    }
-
-    if (length(outputCOL) != 1){
-      print('multiple output columns')
-      stop('too many output columns. expecting 1', call.=FALSE)
-    }
-
-    if (ncol(fuelcomp) != length(inputCOLs)){
-      print('misaligned number of columns')
-      stop('', call.=FALSE)
-    }
-  }
-  return()
-}
+#
+# warnings <- function(ignorewarns == FALSE){
+#   if (ignorewarns==FALSE){
+#     if (is.character(data)==FALSE){
+#       print('data file not characters.')
+#       stop('data is not as.character', call.=FALSE)
+#     }
+#
+#     if (length(outputCOL) != 1){
+#       print('multiple output columns')
+#       stop('too many output columns. expecting 1', call.=FALSE)
+#     }
+#
+#     if (ncol(fuelcomp) != length(inputCOLs)){
+#       print('misaligned number of columns')
+#       stop('', call.=FALSE)
+#     }
+#   }
+#   return()
+# }
