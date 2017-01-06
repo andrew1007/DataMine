@@ -16,7 +16,7 @@ csv_data_setup <- function(data_csv, input_cols, output_cols, samplesize_percent
   new_list["test_size"] <- nrow(raw_data) - sample_size
   new_list
 }
-x <- csv_data_setup('Freezing.csv', 2:5, 6, 0.85)
+# x <- csv_data_setup('Freezing.csv', 2:5, 6, 0.85)
 
 input_data <- function(raw_data, input_cols){
   data.frame(raw_data[ ,input_cols])
@@ -26,26 +26,28 @@ output_data <- function(raw_data, output_cols){
   data.frame(raw_data[ ,output_cols])
 }
 
-data_sampling_row_setup <- function(input, output, sample_size){
+data_sampling_row_setup <- function(table, sample_size){
   new_list <- list()
-  input_range <- as.range(input)
+  input_range <- as.range(nrow(table))
   sample_rows <- sample.rows(input_range, sample_size)
+  column_count <- ncol(table)
   testing_rows <- input_range[-sample_rows]
-  input <- data.frame(input)
-  output <- data.frame(output)
-  new_list["sample_input"] <- data.frame(input[sample_rows, ])
-  new_list["sample_output"] <- data.frame(output[sample_rows, ])
-  new_list["test_input"] <- data.frame(input[testing_rows, ])
-  new_list["test_output"] <- data.frame(output[testing_rows, ])
+  input <- data.frame(table[ ,-column_count])
+  output <- data.frame(table[ ,column_count])
+  new_list[["sample_input"]] <- data.frame(input[sample_rows, ])
+  new_list[["sample_output"]] <- data.frame(output[sample_rows, ])
+  new_list[["test_input"]] <- data.frame(input[testing_rows, ])
+  new_list[["test_output"]] <- data.frame(output[testing_rows, ])
   new_list
 }
 
-insert_to_preallocated_matrix <- function(table, data, i, test_size){
+insert_to_preallocated_matrix <- function(matrix, data, i, test_size){
   start_range <- (i - 1) * test_size + 1
   end_range <- i * test_size
-  table[(start_range:end_range), 1] <- experimental_v_predicted[ ,1]
-  table[(start_range:end_range), 2] <- experimental_v_predicted[ ,2]
-  table
+  for (i in as.range(ncol(matrix))){
+    matrix[(start_range:end_range), i] <- data[ ,i]
+  }
+  matrix
 }
 
 preallocated_matrix <- function(ncol, nrow){
@@ -62,7 +64,8 @@ root_mean_sq <- function(data){
 
 as.range <- function(n){
   if (is.data.frame(n)){
-    return(1:nrow(data.frame(n)))
+    print(TRUE)
+    return(1:nrow(n))
   }
   1:n
 }
