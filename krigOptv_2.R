@@ -3,18 +3,18 @@ KrigOpt <- function(data_csv, test_data, input_cols, output_cols, samplesize_per
 
   optimal_theta <- optimal_theta_monte_carlo(data$input, data$output, sample_size, cross_validate_count, sim_count)
 
-  optimum_parameter_simulation <- krig_test_data_monte_carlo(test_data, data$input, data$output, data$sample_size, optimal_theta)
+  optimum_parameter_simulation <- krig_monte_carlo_table(isTraining=FALSE, test_data, data$input, data$output, data$sample_size, optimal_theta)
 
   final_table <- sum_mean(optimum_parameter_simulation, input_cols)
   final_table
 }
 
-optimal_theta_monte_carlo <- function(input, output, sample_size, cross_validate_count, sim_count){
+optimal_theta_monte_carlo <- function(table, sample_size, cross_validate_count, sim_count){
   best_theta <- NULL
   best_rmse <- NULL
   for (i in as.range(sim_count)){
-    theta_values <- krig_simulation_thetas(input, output, sample_size)
-    simulation_table <- krig_monte_carlo_table(input, output, sample_size, cross_validate_count, theta_values)
+    theta_values <- krig_simulation_thetas(table, sample_size)
+    simulation_table <- krig_monte_carlo_table(isTraining=TRUE, test_data = NULL, table, sample_size, cross_validate_count, theta_values)
     rmse <- root_mean_sq(simulation_table)
     thetas <- theta_comparison(theta_values, rmse, best_theta, best_rmse)
     best_theta <- thetas$theta
@@ -23,9 +23,9 @@ optimal_theta_monte_carlo <- function(input, output, sample_size, cross_validate
   best_thetas
 }
 
-theta_comparison <- function(current_theta, current_rmse, best_theta, best_rmse){
+theta_comparison <- function(current_theta, current_rmse, best_theta = NULL, best_rmse = NULL){
   new_list <- list()
-  if (best_theta == NULL){
+  if (is.null(best_theta)){
     new_list["theta"] = data.frame(current_theta)
     new_list["rmse"] = data.frame(current_rmse)
   } else {
@@ -37,46 +37,28 @@ theta_comparison <- function(current_theta, current_rmse, best_theta, best_rmse)
   new_list
 }
 
-krig_simulation_thetas <- function(input, ouputs, sample_size){
-  data <- data_sampling_setup(input, output, sample_size)
+krig_simulation_thetas <- function(table, sample_size){
+  data <- data_sampling_setup(table, sample_size)
   generated_model <- krig_model(data$sample_input, data$sample_output)
   krig_thetas(generated_model)
 }
 
-#these models probably don't accept vectors from data_sampling_setup
-krig_test_data_monte_carlo <- function(test_data, input, output, sample_size, validation_count, thetas){
+krig_monte_carlo_table <- function(isTraining=TRUE, test_data, table, sample_size, validation_count, thetas){
   full_table <- NULL
   for (i in as.range(validation_count)){
-    sub_table <- NULL
-    data <- data_sampling_setup(input, output, sample_size)
+    data <- data_sampling_setup(table, sample_size)
     simulation_model <- krig_model(data$sample_input, data$sample_output, theta_upper = thetas, theta_lower = thetas)
+    if (isTraining == TRUE){
+      test_data <- data$test_input
+    }
     predictions <- krig_predict(simulation_model, test_data)
-    input_and_predicted_datum <- data.frame(test_data, predicted)
-    sub_table <- rbind(sub_table, input_and_predicted_datum)
-    full_table <- rbind(full_table, sub_table)
-    full_table <- sum_mean(full_table, 1)
+    sub_table <- data.frame(data$test_output, predicted)
+    full_table <- rbindFast(full_table, sub_tables)
   }
   full_table
 }
 
-krig_monte_carlo_table <- function(input, output, sample_size, validation_count, thetas){
-  test_size <- nrow(input) - sample_size
-  full_table <- NULL
-  for (i in as.range(validation_count)){
-    sub_table <- preallocated_matrix(ncol = 2, nrow )
-    data <- data_sampling_setup(input, output, sample_size)
-    simulation_model <- krig_model(data$sample_input, data$sample_output, theta_upper = thetas, theta_lower = thetas)
-    predictions <- krig_predict(simulation_model, data$test_input)
-    experimental_v_predicted <- data.frame(data$test_output, predicted)
-    #performance critical step with sum_mean!!!!
-    sub_table <- insert_to_preallocated_matrix(sub_table, experimental_v_predicted, i, test_size) #probably a really bad idea for speed
-    full_table <- rbind(full_table, sub_tables)
-    full_table <- sum_mean(full_table, 1)
-  }
-  full_table
-}
-
-krig_model <- function(input, output, theta_upper = c(.01, .01, .01, .01), theta_lower = c(.05, .05, .05, .05)){
+krig_model <- function(table, theta_upper = c(.01, .01, .01, .01), theta_lower = c(.05, .05, .05, .05)){
   krig_model <- km(formula =~ 1, design = sample_rows, response = sample_ouputs, optim.method='BFGS', upper=c(5, 5, 5, 5), parinit=theta_lower, lower=theta_lower)
   krig_model
 }

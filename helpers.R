@@ -4,7 +4,10 @@ library(hydroGOF)
 library(reshape)
 library(Metrics)
 library(e1071)
+library(data.table)
 setwd('/home/andrew/Dropbox/R_files/RawData')
+ldf <- data.frame(id1 = sample(n, n), id2 = sample(n / 100, n, replace = TRUE), x1 = rnorm(n), x2 = runif(n))
+rdf <- data.frame(id1 = sample(n, n), id2 = sample(n / 100, n, replace = TRUE), y1 = rnorm(n), y2 = runif(n))
 
 csv_data_setup <- function(data_csv, input_cols, output_cols, samplesize_percentage){
   new_list <- list()
@@ -41,17 +44,8 @@ data_sampling_row_setup <- function(table, sample_size){
   new_list
 }
 
-insert_to_preallocated_matrix <- function(matrix, data, i, test_size){
-  start_range <- (i - 1) * test_size + 1
-  end_range <- i * test_size
-  for (i in as.range(ncol(matrix))){
-    matrix[(start_range:end_range), i] <- data[ ,i]
-  }
-  matrix
-}
-
-preallocated_matrix <- function(ncol, nrow){
-  matrix(data = NA, ncol = ncol, nrow)
+rbindFast <- function(current_table, new_table){
+  data.frame(rbindlist(list(current_table, new_table)))
 }
 
 sample.rows <- function(rows, sample_size){
@@ -115,6 +109,9 @@ percentCOMP <- function(incriments=.01){
 	}
 	fullgrid
 }
+
+
+
 #
 # warnings <- function(ignorewarns == FALSE){
 #   if (ignorewarns==FALSE){
