@@ -7,23 +7,24 @@ library(Metrics)
 library(data.table)
 # library(dplyr)
 
-csv_data_setup <- function(data_csv, input_cols, output_cols, samplesize_percentage){
+data_setup <- function(data, samplesize_percentage){
   new_list <- list()
-  raw_data <- read.csv(data_csv)
-  sample_size <- round(nrow(raw_data) * samplesize_percentage)
-  new_list[["input"]] <- input_data(raw_data, input_cols)
-  new_list[["output"]] <- output_data(raw_data, output_cols)
+  sample_size <- round(nrow(data) * samplesize_percentage)
+  variable_count <- ncol(data)
+  new_list[["full_table"]] <- data
+  new_list[["input"]] <- input_data(data, as.range(variable_count - 1))
+  new_list[["output"]] <- output_data(data, variable_count)
   new_list["sample_size"] <- sample_size
-  new_list["test_size"] <- nrow(raw_data) - sample_size
+  new_list["test_size"] <- nrow(data) - sample_size
   new_list
 }
 
-input_data <- function(raw_data, input_cols){
-  data.frame(raw_data[ ,input_cols])
+input_data <- function(data, input_cols){
+  data.frame(data[ ,input_cols])
 }
 
-output_data <- function(raw_data, output_cols){
-  data.frame(raw_data[ ,output_cols])
+output_data <- function(data, output_cols){
+  data.frame(data[ ,output_cols])
 }
 
 data_sampling_setup <- function(table, sample_size){
