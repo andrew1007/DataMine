@@ -1,13 +1,11 @@
 library(DiceOptim)
-library(neuralnet)
-library(hydroGOF)
-library(reshape)
+# library(neuralnet)
+# library(hydroGOF)
+# library(reshape)
 library(Metrics)
-library(e1071)
+# library(e1071)
 library(data.table)
-setwd('/home/andrew/Dropbox/R_files/RawData')
-ldf <- data.frame(id1 = sample(n, n), id2 = sample(n / 100, n, replace = TRUE), x1 = rnorm(n), x2 = runif(n))
-rdf <- data.frame(id1 = sample(n, n), id2 = sample(n / 100, n, replace = TRUE), y1 = rnorm(n), y2 = runif(n))
+# library(dplyr)
 
 csv_data_setup <- function(data_csv, input_cols, output_cols, samplesize_percentage){
   new_list <- list()
@@ -19,7 +17,6 @@ csv_data_setup <- function(data_csv, input_cols, output_cols, samplesize_percent
   new_list["test_size"] <- nrow(raw_data) - sample_size
   new_list
 }
-# x <- csv_data_setup('Freezing.csv', 2:5, 6, 0.85)
 
 input_data <- function(raw_data, input_cols){
   data.frame(raw_data[ ,input_cols])
@@ -29,7 +26,7 @@ output_data <- function(raw_data, output_cols){
   data.frame(raw_data[ ,output_cols])
 }
 
-data_sampling_row_setup <- function(table, sample_size){
+data_sampling_setup <- function(table, sample_size){
   new_list <- list()
   input_range <- as.range(nrow(table))
   sample_rows <- sample.rows(input_range, sample_size)
@@ -45,7 +42,7 @@ data_sampling_row_setup <- function(table, sample_size){
 }
 
 rbindFast <- function(current_table, new_table){
-  data.frame(rbindlist(list(current_table, new_table)))
+  rbindlist(list(current_table, new_table))
 }
 
 sample.rows <- function(rows, sample_size){
@@ -64,27 +61,13 @@ as.range <- function(n){
   1:n
 }
 
-sum_mean <- function(data, input_cols){
-  uniq_inputs <- unique(data[ ,input_cols])
-  final_table <- NULL
-  for(i in row.range(uniq_inputs)){
-    select_rows <- select_data_by(data, uniq_inputs[i, ])
-    average <- mean(as.vector(select_rows[,ncol(select_rows)]))
-    datum_set <- data.frame(uniq_inputs[i,], average)
-    final_table <- rbind(final_table, datum_set)
-  }
-  final_table
-}
-
-select_data_by <- function(data, where_condition){
-  new_table <- NULL
-  for (j in 1:nrow(data)){
-    new_row <- data[j,-ncol(data)]
-    if (all(new_row == where_condition)){
-      new_table <- rbind(new_table, data[j,])
-    }
-  }
-  new_table
+sum_mean <- function(data){
+  colnames <- colnames(data)
+  output_colnum <- ncol(data)
+  input_colnames <- colnames[c(1:length(colnames)-1)]
+  dots <- lapply(input_colnames, as.symbol)
+  df2 <- data %>% group_by_(.dots=dots) %>% summarise_each(funs(mean), ncol(data))
+  data.frame(df2)
 }
 
 normalize <- function(data){
@@ -95,22 +78,18 @@ denormalize <- function(normalized_data, reference_data){
   sd(reference_data) * normalized_data + mean(reference_data)
 }
 
-percentCOMP <- function(incriments=.01){
-	inc <- incriments*100
-	fullgrid <- data.frame()
-	id <- 0:100
-	for (i in id){
-		grid <- expand.grid(a=0:100, b=0:100, c=0:100, d=i)
-		grid <- data.frame(grid)
-		grid100 <- grid[rowSums(grid)==100,]
-		grid_inc <- grid100[which(grid100[,1] %% inc==0 & grid100[,2] %% inc==0 & grid100[,3] %% inc==0 & grid100[,4] %% inc==0),]
-		grid100_percent <- grid_inc/100
-		fullgrid <- rbind(fullgrid, grid100_percent)
-	}
-	fullgrid
-}
-
-
+# percentCOMP <- functionme()
+# 	id <- 0:100
+# 	for (i in id){
+# 		grid <- expand.grid(a=0:100, b=0:100, c=0:100, d=i)
+# 		grid <- data.frame(grid)
+# 		grid100 <- grid[rowSums(grid)==100,]
+# 		grid_inc <- grid100[which(grid100[,1] %% inc==0 & grid100[,2] %% inc==0 & grid100[,3] %% inc==0 & grid100[,4] %% inc==0),]
+# 		grid100_percent <- grid_inc/100
+# 		fullgrid <- rbind(fullgrid, grid100_percent)
+# 	}
+# 	fullgrid
+# }
 
 #
 # warnings <- function(ignorewarns == FALSE){

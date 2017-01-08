@@ -1,13 +1,16 @@
-KrigOpt <- function(data_csv, test_data, input_cols, output_cols, samplesize_percentage = 0.85, sim_count = 10, cross_validate_count = 100, theta_upper = c(5, 5, 5, 5), theta_lower = c(0.01, 0.01, 0.01, 0.01)){
+KrigOpt <- function(data_csv, test_data, input_cols, output_cols, samplesize_percentage = 0.85, sim_count = 5, cross_validate_count = 5){
   data <- csv_data_setup(data_csv, input_cols, output_cols, samplesize_percentage)
 
-  optimal_theta <- optimal_theta_monte_carlo(data$input, data$output, sample_size, cross_validate_count, sim_count)
+  optimal_theta <- optimal_theta_monte_carlo(data$full_table, data$sample_size, cross_validate_count, sim_count)
 
+  print(data$sample_size)
   optimum_parameter_simulation <- krig_monte_carlo_table(isTraining=FALSE, test_data, data$input, data$output, data$sample_size, optimal_theta)
-
-  final_table <- sum_mean(optimum_parameter_simulation, input_cols)
-  final_table
+  # optimum_parameter_simulation
+  # final_table <- sum_mean(optimum_parameter_simulation, input_cols)
+  # final_table
 }
+
+KrigOpt(input_dat, test_dat, 1:4, 5)
 
 optimal_theta_monte_carlo <- function(table, sample_size, cross_validate_count, sim_count){
   best_theta <- NULL
@@ -20,7 +23,7 @@ optimal_theta_monte_carlo <- function(table, sample_size, cross_validate_count, 
     best_theta <- thetas$theta
     best_rmse <- thetas$rmse
   }
-  best_thetas
+  best_theta
 }
 
 theta_comparison <- function(current_theta, current_rmse, best_theta = NULL, best_rmse = NULL){
@@ -30,8 +33,11 @@ theta_comparison <- function(current_theta, current_rmse, best_theta = NULL, bes
     new_list["rmse"] = data.frame(current_rmse)
   } else {
     if (best_rmse > current_rmse){
-      new_list["theta"] <- current_theta
-      new_list["rmse"] <- current_rmse
+      new_list["theta"] <- data.frame(current_theta)
+      new_list["rmse"] <- data.frame(current_rmse)
+    } else {
+      new_list["theta"] <- data.frame(best_theta)
+      new_list["rmse"] <- data.frame(best_rmse)
     }
   }
   new_list
@@ -43,23 +49,26 @@ krig_simulation_thetas <- function(table, sample_size){
   krig_thetas(generated_model)
 }
 
+#TODO FIX THIS
 krig_monte_carlo_table <- function(isTraining=TRUE, test_data, table, sample_size, validation_count, thetas){
   full_table <- NULL
   for (i in as.range(validation_count)){
-    data <- data_sampling_setup(table, sample_size)
-    simulation_model <- krig_model(data$sample_input, data$sample_output, theta_upper = thetas, theta_lower = thetas)
+    test_data <-
+    data <- list([sample_input]=table[,-ncol(table)], [sample_output] = table[,ncol(table)])
     if (isTraining == TRUE){
+      data <- data_sampling_setup(table, sample_size)
       test_data <- data$test_input
     }
+    simulation_model <- krig_model(data$sample_input, data$sample_output, theta_upper = thetas, theta_lower = thetas)
     predictions <- krig_predict(simulation_model, test_data)
-    sub_table <- data.frame(data$test_output, predicted)
-    full_table <- rbindFast(full_table, sub_tables)
+    sub_table <- data.frame(data$test_output, predictions)
+    full_table <- rbindFast(full_table, sub_table)
   }
   full_table
 }
 
-krig_model <- function(table, theta_upper = c(.01, .01, .01, .01), theta_lower = c(.05, .05, .05, .05)){
-  krig_model <- km(formula =~ 1, design = sample_rows, response = sample_ouputs, optim.method='BFGS', upper=c(5, 5, 5, 5), parinit=theta_lower, lower=theta_lower)
+krig_model <- function(input_table, output_table, theta_upper = c(.01, .01, .01, .01), theta_lower = c(.05, .05, .05, .05)){
+  krig_model <- km(formula =~ 1, design = input_table, response = output_table, optim.method='BFGS', upper=c(5, 5, 5, 5), parinit=theta_lower, lower=theta_lower)
   krig_model
 }
 
@@ -69,7 +78,7 @@ krig_predict <- function(krig_model, test_input){
 }
 
 krig_thetas <- function(krig_model){
-  extract_1 <- unclass(krig_modl)
+  extract_1 <- unclass(krig_model)
   extract_2 <- attr(extract_1, "covariance")
   extract_3 <- unclass(extract_2)
   theta_data <- data.frame(attr(extract_3, "range.val"))
