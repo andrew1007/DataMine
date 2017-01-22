@@ -49,7 +49,6 @@ krig_monte_carlo_scheme <- function(table, sample_size, validation_count, thetas
   full_table
 }
 krig_simulation_thetas(data, 28)
-krig_monte_carlo_scheme(data, 28, 5, data.frame(0.3,0.35534, 0.2321, 0.456))
 # krig_model(data)
 
 
@@ -70,13 +69,21 @@ optimal_theta_monte_carlo <- function(table, sample_size, cross_validate_count, 
 }
 
 
+
+
+
+
 data <- read.csv('Freezing.csv')[,2:6]
-input_dat <- data[1:28,1:4]
+
+setup <- data_setup(data[1:28,], 0.85)
+input_dat <- setup$full_table
 test_dat <- data[29:34,5]
 
+m <- krig_simulation_thetas(input_dat, 20)
 
-setup <- data_setup(data, 0.85)
+krig_monte_carlo_scheme(test_dat, 20, 5, m, isTraining=FALSE)
+k <- optimal_theta_monte_carlo(setup$full_table, 20, 5, 10)
 
-optimal_theta_monte_carlo(setup$full_table, setup$sample_size, 5, 5)
 
-KrigOpt(input_dat, test_dat, 1:4, sim_count = 1, cross_validate_count = 1)
+debug(optimal_theta_monte_carlo(setup$full_table, 20, 5, 10))
+c <- KrigOpt(input_dat, test_dat,samplesize_percentage=0.85, sim_count = 1, cross_validate_count = 1)

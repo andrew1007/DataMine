@@ -26,3 +26,11 @@ krig_monte_carlo_table <- function(table, sample_size, validation_count, thetas)
 }
 
 krig_monte_carlo_table(isTraining=TRUE, )
+
+
+g <- theta_comparison(15, 0.3, NULL, NULL)
+
+
+best_theta <- g$theta
+best_rmse <- g$rmse
+g <- theta_comparison(13, 0.2, best_theta, best_rmse)
