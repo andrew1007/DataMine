@@ -2,15 +2,23 @@ KrigOpt <- function(training_data, test_data, samplesize_percentage = 0.85, sim_
   data <- data_setup(training_data, samplesize_percentage)
   data
   optimal_theta <- optimal_theta_monte_carlo(data$full_table, data$sample_size, cross_validate_count, sim_count)
-  # optimal_theta
-  # print(data$sample_size)
-  optimum_parameter_simulation <- krig_monte_carlo_scheme(test_data, data$sample_size, 10, optimal_theta)
-  # optimum_parameter_simulation
-  # final_table <- sum_mean(optimum_parameter_simulation, input_cols)
-  # final_table
+  optimum_parameter_simulation <- krig_monte_carlo_predict(data$full_table, test_data, data$sample_size, cross_validate_count, optimal_theta)
+  return(optimum_parameter_simulation)
 }
 
-# KrigOpt(input_dat, test_dat)
+
+krig_monte_carlo_predict <- function(table, test_data, sample_size, validation_count, thetas){
+  full_table <- NULL
+  for (i in as.range(validation_count)){
+    data <- data_sampling_setup(table, sample_size)
+    test_data_inputs <- test_data[,-(ncol(test_data))]
+    simulation_model <- krig_model(data$sample_input, data$sample_output, theta_upper = thetas, theta_lower = thetas)
+    predictions <- krig_predict(simulation_model, test_data_inputs)
+    sub_table <- data.frame(test_data_inputs, predictions)
+    full_table <- rbindFast(full_table, sub_table)
+  }
+  full_table
+}
 
 optimal_theta_monte_carlo <- function(table, sample_size, cross_validate_count, sim_count){
   best_theta <- NULL
@@ -22,7 +30,6 @@ optimal_theta_monte_carlo <- function(table, sample_size, cross_validate_count, 
     thetas <- theta_comparison(theta_values, rmse, best_theta, best_rmse)
     best_theta <- thetas$theta
     best_rmse <- thetas$rmse
-    # print(theta_values)
   }
   best_theta
 }
@@ -33,14 +40,10 @@ krig_simulation_thetas <- function(table, sample_size){
   krig_thetas(generated_model)
 }
 
-krig_monte_carlo_scheme <- function(table, sample_size, validation_count, thetas, isTraining=FALSE){
+krig_monte_carlo_scheme <- function(table, sample_size, validation_count, thetas){
   full_table <- NULL
   for (i in as.range(validation_count)){
-    if (isTraining){
-      data <- data_sampling_setup(table, sample_size)
-    } else {
-      data <- table
-    }
+    data <- data_sampling_setup(table, sample_size)
     simulation_model <- krig_model(data$sample_input, data$sample_output, theta_upper = thetas, theta_lower = thetas)
     predictions <- krig_predict(simulation_model, data$test_input)
     sub_table <- data.frame(data$test_output, predictions)

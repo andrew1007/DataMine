@@ -1,5 +1,6 @@
 # History files
 .Rhistory
+.gitignore
 .Rapp.history
 
 # Session Data files
