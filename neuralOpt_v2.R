@@ -78,8 +78,15 @@ neuralnet_compute <- function(model, testing_outputs, sample_outputs){
   data.frame(denormalize(neuralnet_predict, sample_ouputs))
 }
 
-neuralnet_model <- function(input, output, hidden, startweights, nodes= 3){
+neuralnet_model_with_startweights <- function(input, output, hidden, startweights, nodes= 3){
   normalized_output = scale(output)
   dataset = data.frame(input, normalized_output)
   neuralnet(formula = 1, dataset, hidden=nodes, threshold=c(0.1), rep=1, algorithm='rprop+', startweights=weights_0, stepmax= 2e+05)
 }
+
+neuralnet_model <- function(input, output, nodes= 3){
+  normalized_output = scale(output)
+  dataset = data.frame(input, normalized_output)
+  neuralnet(formula = 1, dataset, hidden=nodes, threshold=c(0.1), rep=1, algorithm='rprop+', stepmax= 2e+05)
+}
+# formula <- as.formula(c(paste(out_colname, '~', paste(in_colname, collapse = "+"))))
