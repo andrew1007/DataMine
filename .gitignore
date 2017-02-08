@@ -19,8 +19,8 @@ vignettes/*.pdf
 # OAuth2 token, see https://github.com/hadley/httr/releases/tag/v0.3
 .httr-oauth
 
-testing.R
-testing2.R
+.testing.R
+.testing2.R
 
 RawData/
 *.gitignore
