@@ -1,5 +1,5 @@
 library(DiceOptim)
-# library(neuralnet)
+library(neuralnet)
 # library(hydroGOF)
 # library(reshape)
 library(Metrics)
@@ -76,7 +76,7 @@ normalize <- function(data){
 }
 
 denormalize <- function(normalized_data, reference_data){
-  sd(reference_data) * normalized_data + mean(reference_data)
+  sd(reference_data[,1]) * normalized_data + mean(reference_data[,1])
 }
 
 # percentCOMP <- functionme()
