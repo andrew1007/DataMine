@@ -26,11 +26,13 @@ neuralnet_model <- function(input, output, nodes= 3){
 
 
 model <- neuralnet_model(NULL, input_dat, output_dat)
-neuralnet_compute <- function(model, testing_outputs){
-  neuralnet_predict <- compute(model, input_dat)
-  # print(neuralnet_predict)
-  data.frame(denormalize(neuralnet_predict), input_dat)
-  neuralnet_predict
-}
+# neuralnet_compute <- function(model, testing_outputs){
+#   neuralnet_predict <- compute(model, input_dat)
+#   # print(neuralnet_predict)
+#   data.frame(denormalize(neuralnet_predict), input_dat)
+#   neuralnet_predict
+# }
 x <- neuralnet_compute(model, input_dat, output_dat)
-denormalize(x$net.result, output_dat)
+randomize_weights(data.frame(1:10))
+
+neuralnet_weights(1, input=input_dat, output=output_dat, 4)

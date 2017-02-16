@@ -60,16 +60,19 @@ neuralnet_monte_carlo_table <- function(input, output, sample_size, validation_c
   full_table
 }
 
-neuralnet_weights <- function(formula = 1, input, output, hidden, startweights){
+neuralnet_weights <- function(formula = 1, input, output, hidden){
   normalized_output = scale(output)
   dataset = data.frame(input, normalized_output)
-  ann_model = neuralnet(formula, dataset, hidden=opt_node, threshold=c(0.1), rep=1, algorithm='rprop+', startweights=weights_0, stepmax= 2e+05)
+  output_colname<- colnames(output)
+  input_colname <- colnames(input)
+  formula <- as.formula(c(paste(output_colname, '~', paste(input_colname, collapse = "+"))))
+  ann_model = neuralnet(formula, dataset, hidden= hidden, threshold=c(0.1), rep=1, algorithm='rprop+', stepmax= 2e+05)
   data.frame(unlist(ann_model$weight))
 }
 
 randomize_weights <- function(weights){
   random_weight_sequence <- seq(-0.2, 0.2, by = 2e-04)
-  weight_scale_samples <- random_weights <- sample(randomized_weight_sequence, length(weights))
+  weight_scale_samples <- random_weights <- sample(random_weight_sequence, length(weights))
   weights + weight_scale_samples
 }
 
@@ -77,7 +80,10 @@ randomize_weights <- function(weights){
 neuralnet_model_with_startweights <- function(input, output, hidden, startweights, nodes= 3){
   normalized_output = scale(output)
   dataset = data.frame(input, normalized_output)
-  neuralnet(formula = 1, dataset, hidden=nodes, threshold=c(0.1), rep=1, algorithm='rprop+', startweights=weights_0, stepmax= 2e+05)
+  output_colname<- colnames(output)
+  input_colname <- colnames(input)
+  formula <- as.formula(c(paste(output_colname, '~', paste(input_colname, collapse = "+"))))
+  neuralnet(formula = formula, dataset, hidden=nodes, threshold=c(0.1), rep=1, algorithm='rprop+', startweights=weights_0, stepmax= 2e+05)
 }
 
 
@@ -87,6 +93,7 @@ neuralnet_compute <- function(neuralnet_model, testing_inputs, sample_outputs){
   colnames(predicted_output) <- "neuralnet prediction"
   predicted_output
 }
+
 neuralnet_model <- function(formula=NULL, input, output, nodes= 3){
   if (is.null(formula)){
     output_colname<- colnames(output)
