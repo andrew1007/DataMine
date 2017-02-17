@@ -23,4 +23,5 @@ testing.R
 testing2.R
 
 RawData/
+old/
 *.gitignore
