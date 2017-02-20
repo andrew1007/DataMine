@@ -67,7 +67,7 @@ neuralnet_weights <- function(formula = 1, input, output, hidden){
   input_colname <- colnames(input)
   formula <- as.formula(c(paste(output_colname, '~', paste(input_colname, collapse = "+"))))
   ann_model = neuralnet(formula, dataset, hidden= hidden, threshold=c(0.1), rep=1, algorithm='rprop+', stepmax= 2e+05)
-  data.frame(unlist(ann_model$weight))
+  unlist(ann_model$weight)
 }
 
 randomize_weights <- function(weights){
@@ -76,14 +76,13 @@ randomize_weights <- function(weights){
   weights + weight_scale_samples
 }
 
-
 neuralnet_model_with_startweights <- function(input, output, hidden, startweights, nodes= 3){
   normalized_output = scale(output)
   dataset = data.frame(input, normalized_output)
   output_colname<- colnames(output)
   input_colname <- colnames(input)
   formula <- as.formula(c(paste(output_colname, '~', paste(input_colname, collapse = "+"))))
-  neuralnet(formula = formula, dataset, hidden=nodes, threshold=c(0.1), rep=1, algorithm='rprop+', startweights=weights_0, stepmax= 2e+05)
+  neuralnet(formula = formula, dataset, hidden=nodes, threshold=c(0.1), rep=1, algorithm='rprop+', startweights=weights, stepmax= 2e+05)
 }
 
 
