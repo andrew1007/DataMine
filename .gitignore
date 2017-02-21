@@ -21,6 +21,8 @@ vignettes/*.pdf
 
 testing.R
 testing2.R
+plottingFuncs.R
+svm_monte_carlo.R
 
 RawData/
 old/
