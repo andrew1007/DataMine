@@ -1,7 +1,7 @@
 NeuralNetOpt <- function(data_csv, test_data, samplesize_percentage = 0.85, input_cols, output_cols, sim_count = 10, cross_validate_count = 100, nodes = 1, hidden = 1){
   raw_data <- read.csv(data_csv)
-  inputs <- input.data(raw_data, input_cols)
-  outputs <- output.data(raw_data, output_cols)
+  inputs <- input_data(raw_data, input_cols)
+  outputs <- output_data(raw_data, output_cols)
   sample_size <- round(nrow(inputs) * samplesize_percentage)
   test_size <- nrow(raw_data) - sample_size
 
@@ -19,10 +19,11 @@ neuralnet_calc <- function(input, output, test_data, validation_count, weights, 
   sum_mean(sample_table, as.range(ncol(input)))
 }
 
-optimal_weights_monte_carlo <- function(input, output, sample_size, cross_validate_count, sim_count){
+optimal_weights_monte_carlo <- function(input, output, sample_size, cross_validate_count, sim_count, hidden = 1){
   for (i in as.range(sim_count)){
-    sim_weights = neuralnet_weights(formula = 1, input, output, hidden, startweights)
-    randomized_weight <- randomized_weights(sim_weights)
+    sim_weights = neuralnet_weights(formula = 1, input, output, hidden)
+    randomized_weight <- randomize_weights(sim_weights)
+    print("yes")
     simulation_table <- neuralnet_monte_carlo_table(input, output, sample_size, cross_validate_count, randomized_weight)
     rmse <- root_mean_sq(simulation_table)
     if (i == 1){
@@ -38,14 +39,15 @@ optimal_weights_monte_carlo <- function(input, output, sample_size, cross_valida
   best_weights
 }
 
-
-neuralnet_monte_carlo_table <- function(input, output, sample_size, validation_count, weights){
-  test_size <- nrow(inputs) - sample_size
+neuralnet_monte_carlo_table <- function(input, output, sample_size, cross_validate_count, weights){
+  test_size <- nrow(input) - sample_size
   full_table <- NULL
   for(i in as.range(cross_validate_count)){
-    sub_table <- preallocated_matrix(ncol = 2, nrow = test_size)
-    data <- data_sampling_setup(input, output, sample_size)
-    cross_validate_weights = randomize_weights(sim_weights)
+    sub_table <- matrix(, nrow=test_size, ncol = 2)
+    # sub_table <- preallocated_matrix(ncol = 2, nrow = test_size)
+    data <- data_setup(data.frame(input, output), sample_size)
+    sim_weights <- neuralnet_weights(input = data$input, output = data$output)
+    cross_validate_weights <- randomize_weights(sim_weights)
     neuralnet_model <- neuralnet_model(formula = 1, data$sample_inputs, data$sample_outputs, hidden, startweights, sample_size)
     neuralnet_predict <- neuralnet_compute(neuralnet_model, data$testing_outputs, data$sample_outputs)
     result_table <- data.frame(neuralnet_predict, data$testing_outputs)
@@ -60,7 +62,7 @@ neuralnet_monte_carlo_table <- function(input, output, sample_size, validation_c
   full_table
 }
 
-neuralnet_weights <- function(formula = 1, input, output, hidden){
+neuralnet_weights <- function(formula = 1, input, output, hidden = 1){
   normalized_output = scale(output)
   dataset = data.frame(input, normalized_output)
   output_colname<- colnames(output)
@@ -86,7 +88,6 @@ neuralnet_model_with_startweights <- function(input, output, hidden, startweight
   }
   neuralnet(formula = formula, dataset, hidden=nodes, threshold=c(0.1), rep=1, algorithm='rprop+', startweights=weights, stepmax= 2e+05)
 }
-
 
 neuralnet_compute <- function(neuralnet_model, testing_inputs, sample_outputs){
   neuralnet_predict <- compute(neuralnet_model, testing_inputs)
